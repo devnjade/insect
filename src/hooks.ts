@@ -8,17 +8,28 @@ import {
 } from "react";
 import { InsectProps } from "./types";
 
-const useInsect = ({
-  name,
-  type = "text",
-  value,
-  options,
-  defaultOption,
-  onSelect,
-  closeOnBlur = true,
-  allowMultiple,
-  search,
-}: InsectProps) => {
+// const useInsect = ({
+//   name,
+//   type = "text",
+//   value,
+//   options,
+//   defaultOption,
+//   onSelect,
+//   closeOnBlur = true,
+//   allowMultiple,
+//   search,
+// }: InsectProps) => {
+
+const useInsect = (types :InsectProps) => {
+  const name = types.name;
+  const type = types.type || "text";
+  const value = types.value;
+  const options = types.options;
+  const defaultOption = types.defaultOption;
+  const onSelect = types.onSelect;
+  const closeOnBlur = types.closeOnBlur || true;
+  const allowMultiple = types.allowMultiple || false;
+  const search = types.search || false;
 
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -210,7 +221,8 @@ const useInsect = ({
     handleSearch,
     formatFilterText,
     isSelected,
-    totalSelected
+    totalSelected,
+    handleSelect,
   }
 }
 

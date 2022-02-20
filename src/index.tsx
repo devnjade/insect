@@ -41,9 +41,11 @@ export const Insect = ({
     selected,
     setShowDD,
     handleSearch,
+    handleSelect,
     formatFilterText,
     isSelected,
     totalSelected
+    // @ts-ignore
   } = useInsect();
 
   return (
