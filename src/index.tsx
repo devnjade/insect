@@ -1,59 +1,12 @@
 import * as React from "react";
+import useInsect from "./hooks";
 import "./styles.scss";
-import {
-  useState,
-  useEffect,
-  useLayoutEffect,
-  useCallback,
-  useRef,
-} from "react";
-
-export interface InsectOption {
-  title: string;
-  value: string;
-}
-
-export interface InsectProps {
-  prefixIcon?: string | React.ReactNode | null;
-  suffixIcon?: string | React.ReactNode | null;
-  dropdownIcon?: string | React.ReactNode | null;
-  checkmarkIcon?: string | React.ReactNode | null;
-  placeholder?: string;
-  value?: string;
-  label?: string;
-  name: string;
-  className?: string;
-  labelClass?: string;
-  inputWrapperClass?: string;
-  inputClass?: string;
-  iconsClass?: string;
-  checkerClass?: string;
-  dropdownClass?: string;
-  type?: "text" | "number" | "password" | "email" | "select" | "textarea";
-  defaultOption?: InsectOption;
-  options?: InsectOption[];
-  onChange?: (
-    e: React.FormEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => void;
-  onBlur?: (
-    e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => void;
-  onFocus?: (
-    e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => void;
-  onSelect?: (value: string | string[] | null, name: string) => void;
-  closeOnBlur?: boolean;
-  allowMultiple?: number;
-  search?: boolean;
-  rows?: number;
-}
+import { InsectProps } from "./types";
 
 export const Insect = ({
   name,
   type = "text",
-  value,
   options,
-  defaultOption,
   prefixIcon,
   suffixIcon,
   dropdownIcon,
@@ -63,8 +16,6 @@ export const Insect = ({
   onChange,
   onBlur,
   onFocus,
-  onSelect,
-  closeOnBlur = true,
   allowMultiple,
   className,
   inputWrapperClass,
@@ -73,182 +24,27 @@ export const Insect = ({
   iconsClass,
   dropdownClass,
   checkerClass,
-  search,
   rows,
 }: InsectProps) => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const searchRef = useRef<HTMLInputElement>(null);
-  const ddRef = useRef<HTMLDivElement>(null);
-  const [iosDevice, setIosDevice] = useState<boolean>(false);
-  const [showDD, setShowDD] = useState<boolean>(false);
-  const [selected, setSelected] = useState<string>("");
-  const [selecteds, setSelecteds] = useState<string[]>([]);
-  const [selectedsValue, setSelectedsValue] = useState<string[]>([]);
-  const [filter, setFilter] = useState<string>("");
 
-  const searchCondiionOne = !allowMultiple && search && showDD;
-  const searchConditionTwo =
-    search && showDD && allowMultiple && selecteds.length < allowMultiple;
-  const showSearch = searchCondiionOne || searchConditionTwo;
-
-  const inputValue =
-    type === "select" && allowMultiple
-      ? selecteds?.filter((item) => item !== null).join(", ")
-      : type === "select"
-      ? selected
-      : value
-      ? value
-      : "";
-
-  const filteredDropdown = options?.filter((option) =>
-    option.title.toLowerCase().includes(filter.toLowerCase())
-  );
-
-  const handleSelect = (title: string, value: string) => {
-    if (!onSelect) {
-      return;
-    }
-
-    // reset filter
-    setFilter("");
-
-    // set or unset single value if multiple is off
-    if (!allowMultiple) {
-      // update state and return value to parent
-      selected === name
-        ? [onSelect(null, name), setSelected("")]
-        : [onSelect(value, name), setSelected(title)];
-    }
-
-    if (!!allowMultiple) {
-      // check if selected item is already present
-      const isPresent = selecteds?.find((item) => item === title);
-      const spaceAvailable = selecteds?.length < allowMultiple;
-
-      if (isPresent) {
-        const newOptions = selecteds.filter((option) => option !== title);
-        const newValues = selectedsValue.filter((option) => option !== value);
-
-        setSelecteds(newOptions);
-        setSelectedsValue(newValues);
-      } else if (spaceAvailable) {
-        const previousOptions = [...selecteds];
-        const previousValues = [...selectedsValue];
-
-        previousOptions.push(title);
-        previousValues.push(value);
-
-        setSelecteds(previousOptions);
-        setSelectedsValue(previousValues);
-      }
-    }
-  };
-
-  const handleSearch = (e: React.FormEvent<HTMLInputElement>) => {
-    const value = e.currentTarget.value;
-    const strippedValue = value.split(", ");
-    setFilter(strippedValue[strippedValue.length - 1]);
-  };
-
-  const formatFilterText = () => {
-    // const allSelectedValues = flattenObj(selectedsValue);
-    const selectedItemsPresent = selecteds?.length > 0;
-    const previousItemsPresent = !!selected || selectedItemsPresent;
-
-    if (previousItemsPresent && allowMultiple) {
-      return `${inputValue}, ${filter}`;
-    } else {
-      return filter;
-    }
-  };
-
-  const isSelected = (title: string) => {
-    return selecteds.includes(title);
-  };
-
-  const totalSelected = useCallback(() => {
-    return selecteds.length;
-  }, [selectedsValue]);
-
-  useEffect(() => {
-    if (onSelect && allowMultiple && selectedsValue.length !== 0) {
-      onSelect(selectedsValue, name);
-    }
-  }, [selectedsValue]);
-
-  useEffect(() => {
-    const handleClick = (e: any) => {
-      if (!showDD) {
-        return;
-      } else if (showDD && !!closeOnBlur) {
-        let shouldClose = true;
-        const target = e.target;
-        const componentList = [
-          containerRef.current,
-          inputRef.current,
-          textareaRef.current,
-          searchRef.current,
-        ];
-
-        componentList.forEach((item) => {
-          target === item ? (shouldClose = false) : null;
-        });
-
-        shouldClose && setShowDD(false);
-      }
-    };
-
-    window.addEventListener("click", handleClick);
-
-    return () => window.removeEventListener("click", handleClick);
-  }, [showDD]);
-
-  useLayoutEffect(() => {
-    const dd = ddRef.current;
-
-    const setPosition = (): void => {
-      const { height } = dd?.getBoundingClientRect() || {};
-
-      if (dd && height) {
-        dd.style.bottom = `${-height - 6}px`;
-      }
-    };
-
-    setPosition();
-    window.addEventListener("resize", setPosition);
-
-    return () => window.removeEventListener("resize", setPosition);
-  }, [showDD, filter]);
-
-  useEffect(() => {
-    // get device type in order to set input field size
-    const isIOS: boolean = [
-      "iPad Simulator",
-      "iPhone Simulator",
-      "iPod Simulator",
-      "iPad",
-      "iPhone",
-      "iPod",
-    ].includes(navigator.platform);
-
-    const isIPAD =
-      navigator.userAgent.includes("Mac") && "ontouchend" in document;
-
-    if (isIOS || isIPAD) {
-      setIosDevice(true);
-    }
-  }, []);
-
-  useEffect(() => {
-    const shouldUpdate =
-      defaultOption && selected === "" && selecteds.length === 0;
-
-    if (shouldUpdate) {
-      handleSelect(defaultOption.title, defaultOption.value);
-    }
-  }, [defaultOption]);
+  const {
+    iosDevice,
+    showSearch,
+    filteredDropdown,
+    containerRef,
+    showDD,
+    inputValue,
+    textareaRef,
+    searchRef,
+    inputRef,
+    ddRef,
+    selected,
+    setShowDD,
+    handleSearch,
+    formatFilterText,
+    isSelected,
+    totalSelected
+  } = useInsect();
 
   return (
     <div className={`insect test ${className}`}>
